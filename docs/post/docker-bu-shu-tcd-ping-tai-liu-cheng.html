@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html data-color-mode="light" data-dark-theme="dark" data-light-theme="light" lang="zh-CN">
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
+    
+    <link rel="icon" href="https://github.githubassets.com/favicons/favicon.svg"><script>
+        let theme = localStorage.getItem("meek_theme") || "light";
+        document.documentElement.setAttribute("data-color-mode", theme);
+    </script>
+<meta name="description" content="# 1.部署准备工作
+
+# 2.部署流程
+
+## 初始化
+
+### 提权
+
+```sh
+sudo -i
+```
+
+### 创建文件夹
+
+```sh
+cd /
+mkdir tcdapp
+cd tcdapp
+```
+
+### 创建网络
+
+```sh
+docker network create -d bridge tcdnet
+```
+
+## minio存储服务
+
+### 创建映射文件夹
+
+```cmd
+cd /tcdapp
+mkdir minioData
+mkdir minioConfig
+ls
+```
+
+### 部署
+
+```sh
+docker run  --name tcdminio \
+  --network tcdnet\
+  -p 9000:9000 \
+  -p 9090:9090 \
+  -d --restart=always \
+  -e 'MINIO_ROOT_USER=3485977506' \
+  -e 'MINIO_ROOT_PASSWORD=3485977506' \
+  -v /tcdapp/minioData:/data \
+  -v /tcdapp/minioConfig:/root/.minio \
+  minio/minio server \
+  /data --console-address ':9090' --address ':9000'
+```
+
+## Redis服务
+
+### 创建文件夹及文件
+
+```sh
+cd /tcdapp
+mkdir redis
+cd redis
+mkdir conf
+mkdir data
+cd conf
+touch redis.conf
+```
+
+### 编辑配置
+
+```sh
+vim redis.conf
+```
+
+```js
+requirepass 123456
+protected-mode no
+bind 0.0.0.0
+```
+
+### 部署
+
+```sh
+docker run \
+--restart=always \
+--network tcdnet \
+--log-opt max-size=100m \
+--log-opt max-file=2 \
+-p 6379:6379 \
+--name tcdredis \
+-v /tcdapp/redis/conf/redis.conf:/etc/redis/redis.conf  \
+-v /tcdapp/redis/data:/data \
+-d redis redis-server /etc/redis/redis.conf \
+--appendonly yes \
+--requirepass 123456 
+```
+
+## MySQL服务
+
+### 创建文件夹及文件
+
+```sh
+mkdir -p  /tcdapp/mysql/{conf,data,log}
+cd /tcdapp/mysql/conf
+sudo touch my.cnf
+vim my.cnf
+```
+
+```mysql
+[client]
+#设置客户端默认字符集utf8mb4
+default-character-set=utf8mb4
+[mysql]
+#设置服务器默认字符集为utf8mb4
+default-character-set=utf8mb4
+[mysqld]
+#配置服务器的服务号，具备日后需要集群做准备
+server-id = 1
+#开启MySQL数据库的二进制日志，用于记录用户对数据库的操作SQL语句，具备日后需要集群做准备
+log-bin=mysql-bin
+#设置清理超过30天的日志，以免日志堆积造过多成服务器内存爆满。">
+<meta property="og:title" content="docker部署tcd平台流程">
+<meta property="og:description" content="# 1.部署准备工作
+
+# 2.部署流程
+
+## 初始化
+
+### 提权
+
+```sh
+sudo -i
+```
+
+### 创建文件夹
+
+```sh
+cd /
+mkdir tcdapp
+cd tcdapp
+```
+
+### 创建网络
+
+```sh
+docker network create -d bridge tcdnet
+```
+
+## minio存储服务
+
+### 创建映射文件夹
+
+```cmd
+cd /tcdapp
+mkdir minioData
+mkdir minioConfig
+ls
+```
+
+### 部署
+
+```sh
+docker run  --name tcdminio \
+  --network tcdnet\
+  -p 9000:9000 \
+  -p 9090:9090 \
+  -d --restart=always \
+  -e 'MINIO_ROOT_USER=3485977506' \
+  -e 'MINIO_ROOT_PASSWORD=3485977506' \
+  -v /tcdapp/minioData:/data \
+  -v /tcdapp/minioConfig:/root/.minio \
+  minio/minio server \
+  /data --console-address ':9090' --address ':9000'
+```
+
+## Redis服务
+
+### 创建文件夹及文件
+
+```sh
+cd /tcdapp
+mkdir redis
+cd redis
+mkdir conf
+mkdir data
+cd conf
+touch redis.conf
+```
+
+### 编辑配置
+
+```sh
+vim redis.conf
+```
+
+```js
+requirepass 123456
+protected-mode no
+bind 0.0.0.0
+```
+
+### 部署
+
+```sh
+docker run \
+--restart=always \
+--network tcdnet \
+--log-opt max-size=100m \
+--log-opt max-file=2 \
+-p 6379:6379 \
+--name tcdredis \
+-v /tcdapp/redis/conf/redis.conf:/etc/redis/redis.conf  \
+-v /tcdapp/redis/data:/data \
+-d redis redis-server /etc/redis/redis.conf \
+--appendonly yes \
+--requirepass 123456 
+```
+
+## MySQL服务
+
+### 创建文件夹及文件
+
+```sh
+mkdir -p  /tcdapp/mysql/{conf,data,log}
+cd /tcdapp/mysql/conf
+sudo touch my.cnf
+vim my.cnf
+```
+
+```mysql
+[client]
+#设置客户端默认字符集utf8mb4
+default-character-set=utf8mb4
+[mysql]
+#设置服务器默认字符集为utf8mb4
+default-character-set=utf8mb4
+[mysqld]
+#配置服务器的服务号，具备日后需要集群做准备
+server-id = 1
+#开启MySQL数据库的二进制日志，用于记录用户对数据库的操作SQL语句，具备日后需要集群做准备
+log-bin=mysql-bin
+#设置清理超过30天的日志，以免日志堆积造过多成服务器内存爆满。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://Anfioo.github.io/post/docker-bu-shu-tcd-ping-tai-liu-cheng.html">
+<meta property="og:image" content="https://github.githubassets.com/favicons/favicon.svg">
+<title>docker部署tcd平台流程</title>
+<link href="//unpkg.com/@wooorm/starry-night@2.1.1/style/both.css" rel="stylesheet" />
+
+
+</head>
+<style>
+body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;padding: 45px;font-size: 16px;font-family: sans-serif;line-height: 1.25;}
+#header{display:flex;padding-bottom:8px;border-bottom: 1px solid var(--borderColor-muted, var(--color-border-muted));margin-bottom: 16px;}
+#footer {margin-top:64px; text-align: center;font-size: small;}
+
+</style>
+
+<style>
+.postTitle{margin: auto 0;font-size:40px;font-weight:bold;}
+.title-right{display:flex;margin:auto 0 0 auto;}
+.title-right .circle{padding: 14px 16px;margin-right:8px;}
+#postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
+#postBody hr{height:2px;}
+#cmButton{height:48px;margin-top:48px;}
+#comments{margin-top:64px;}
+.g-emoji{font-size:24px;}
+@media (max-width: 600px) {
+    body {padding: 8px;}
+    .postTitle{font-size:24px;}
+}
+.copy-feedback {
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 50px;
+    color: var(--color-fg-on-emphasis);
+    background-color: var(--color-fg-muted);
+    border-radius: 3px;
+    padding: 5px 8px;
+    font-size: 12px;
+}
+</style>
+
+
+
+
+<body>
+    <div id="header">
+<h1 class="postTitle">docker部署tcd平台流程</h1>
+<div class="title-right">
+    <a href="https://Anfioo.github.io" id="buttonHome" class="btn btn-invisible circle" title="首页">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathHome" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+    <a href="https://github.com/Anfioo/Anfioo.github.io/issues/2" target="_blank" class="btn btn-invisible circle" title="Issue">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathIssue" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+
+    <a class="btn btn-invisible circle" onclick="modeSwitch();" title="切换主题">
+        <svg class="octicon" width="16" height="16" >
+            <path id="themeSwitch" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+
+</div>
+</div>
+    <div id="content">
+<div class="markdown-body" id="postBody"><h1>1.部署准备工作</h1>
+<h1>2.部署流程</h1>
+<h2>初始化</h2>
+<h3>提权</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">sudo -i</pre></div>
+<h3>创建文件夹</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate"><span class="pl-c1">cd</span> /
+mkdir tcdapp
+<span class="pl-c1">cd</span> tcdapp</pre></div>
+<h3>创建网络</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">docker network create -d bridge tcdnet</pre></div>
+<h2>minio存储服务</h2>
+<h3>创建映射文件夹</h3>
+<div class="highlight highlight-source-batchfile"><pre class="notranslate"><span class="pl-k">cd</span> /tcdapp
+<span class="pl-k">mkdir</span> minioData
+<span class="pl-k">mkdir</span> minioConfig
+ls</pre></div>
+<h3>部署</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">docker run  --name tcdminio \
+  --network tcdnet\
+  -p 9000:9000 \
+  -p 9090:9090 \
+  -d --restart=always \
+  -e <span class="pl-s"><span class="pl-pds">"</span>MINIO_ROOT_USER=3485977506<span class="pl-pds">"</span></span> \
+  -e <span class="pl-s"><span class="pl-pds">"</span>MINIO_ROOT_PASSWORD=3485977506<span class="pl-pds">"</span></span> \
+  -v /tcdapp/minioData:/data \
+  -v /tcdapp/minioConfig:/root/.minio \
+  minio/minio server \
+  /data --console-address <span class="pl-s"><span class="pl-pds">"</span>:9090<span class="pl-pds">"</span></span> --address <span class="pl-s"><span class="pl-pds">"</span>:9000<span class="pl-pds">"</span></span></pre></div>
+<h2>Redis服务</h2>
+<h3>创建文件夹及文件</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate"><span class="pl-c1">cd</span> /tcdapp
+mkdir redis
+<span class="pl-c1">cd</span> redis
+mkdir conf
+mkdir data
+<span class="pl-c1">cd</span> conf
+touch redis.conf</pre></div>
+<h3>编辑配置</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">vim redis.conf</pre></div>
+<div class="highlight highlight-source-js"><pre class="notranslate"><span class="pl-s1">requirepass</span><span class="pl-kos"></span> <span class="pl-c1">123456</span>
+<span class="pl-s1">protected</span><span class="pl-c1">-</span><span class="pl-s1">mode</span> <span class="pl-s1">no</span>
+<span class="pl-s1">bind</span> <span class="pl-c1">0.0</span><span class="pl-c1">.0</span><span class="pl-c1">.0</span></pre></div>
+<h3>部署</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">docker run \
+--restart=always \
+--network tcdnet \
+--log-opt max-size=100m \
+--log-opt max-file=2 \
+-p 6379:6379 \
+--name tcdredis \
+-v /tcdapp/redis/conf/redis.conf:/etc/redis/redis.conf  \
+-v /tcdapp/redis/data:/data \
+-d redis redis-server /etc/redis/redis.conf \
+--appendonly yes \
+--requirepass 123456 </pre></div>
+<h2>MySQL服务</h2>
+<h3>创建文件夹及文件</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">mkdir -p  /tcdapp/mysql/{conf,data,log}
+<span class="pl-c1">cd</span> /tcdapp/mysql/conf
+sudo touch my.cnf
+vim my.cnf</pre></div>
+<div class="highlight highlight-source-sql"><pre class="notranslate">[client]
+<span class="pl-c"><span class="pl-c">#</span>设置客户端默认字符集utf8mb4</span>
+default<span class="pl-k">-</span>character<span class="pl-k">-</span><span class="pl-k">set</span><span class="pl-k">=</span>utf8mb4
+[mysql]
+<span class="pl-c"><span class="pl-c">#</span>设置服务器默认字符集为utf8mb4</span>
+default<span class="pl-k">-</span>character<span class="pl-k">-</span><span class="pl-k">set</span><span class="pl-k">=</span>utf8mb4
+[mysqld]
+<span class="pl-c"><span class="pl-c">#</span>配置服务器的服务号，具备日后需要集群做准备</span>
+server<span class="pl-k">-</span>id <span class="pl-k">=</span> <span class="pl-c1">1</span>
+<span class="pl-c"><span class="pl-c">#</span>开启MySQL数据库的二进制日志，用于记录用户对数据库的操作SQL语句，具备日后需要集群做准备</span>
+log<span class="pl-k">-</span>bin<span class="pl-k">=</span>mysql<span class="pl-k">-</span>bin
+<span class="pl-c"><span class="pl-c">#</span>设置清理超过30天的日志，以免日志堆积造过多成服务器内存爆满。2592000秒等于30天的秒数</span>
+binlog_expire_logs_seconds <span class="pl-k">=</span> <span class="pl-c1">2592000</span>
+<span class="pl-c"><span class="pl-c">#</span>解决MySQL8.0版本GROUP BY问题</span>
+sql_mode<span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION<span class="pl-pds">'</span></span>
+<span class="pl-c"><span class="pl-c">#</span>允许最大的连接数</span>
+max_connections<span class="pl-k">=</span><span class="pl-c1">1000</span>
+<span class="pl-c"><span class="pl-c">#</span> 禁用符号链接以防止各种安全风险</span>
+symbolic<span class="pl-k">-</span>links<span class="pl-k">=</span><span class="pl-c1">0</span>
+<span class="pl-c"><span class="pl-c">#</span> 设置东八区时区</span>
+default<span class="pl-k">-</span>time_zone <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>+8:00<span class="pl-pds">'</span></span></pre></div>
+<h3>部署</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">docker run \
+  --restart=always \
+  -p 3306:3306 \
+  --network tcdnet \
+  --name tcdmysql \
+  --privileged=true \
+  -v /tcdapp/mysql/log:/var/log/mysql \
+  -v /tcdapp/mysql/data:/var/lib/mysql \
+  -v /tcdapp/mysql/conf/my.cnf:/etc/mysql/my.cnf \
+  -v /tcdapp/mysql/mysql-files:/var/lib/mysql-files \
+  -e MYSQL_ROOT_PASSWORD=a12bCd3_W45pUq6 \
+  -d mysql:latest</pre></div>
+<h3>登录权限更新</h3>
+<h4>使用exec连接数据库</h4>
+<div class="highlight highlight-source-batchfile"><pre class="notranslate">docker exec -it tcdmysql /bin/bash
+mysql -u root -pa12bCd3_W45pUq6</pre></div>
+<h4>root用户所有ip皆可登录</h4>
+<div class="highlight highlight-source-sql"><pre class="notranslate"><span class="pl-k">CREATE</span> <span class="pl-k">USER</span> '<span class="pl-en">root</span>'@<span class="pl-s"><span class="pl-pds">'</span>%<span class="pl-pds">'</span></span> IDENTIFIED BY <span class="pl-s"><span class="pl-pds">'</span>a12bCd3_W45pUq6<span class="pl-pds">'</span></span>;
+<span class="pl-k">GRANT</span> ALL PRIVILEGES <span class="pl-k">ON</span> <span class="pl-k">*</span>.<span class="pl-k">*</span> TO <span class="pl-s"><span class="pl-pds">'</span>root<span class="pl-pds">'</span></span>@<span class="pl-s"><span class="pl-pds">'</span>%<span class="pl-pds">'</span></span>;
+FLUSH PRIVILEGES;</pre></div>
+<h2>WebSSH服务</h2>
+<h3>部署</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">docker run -d -p 5032:5032 --log-driver json-file --log-opt max-file=1 --log-opt max-size=100m --restart always --name webssh -e TZ=Asia/Shanghai jrohy/webssh</pre></div>
+<h2>minioService文件上传服务</h2>
+<h3>代码修改</h3>
+<h4>application.properties修改返还的ip地址</h4>
+<div class="highlight highlight-source-ini"><pre class="notranslate"><span class="pl-k">spring.application.name</span>=minio
+<span class="pl-k">server.port</span>=4321
+<span class="pl-k">minio.access-key</span>=SJmWtUkA18rR6f2RHZkN
+<span class="pl-k">minio.secret-key</span>=qBzkKzAJhKZphlbjo8q9qf9nfi2x08PjUtF09aiN
+<span class="pl-k">minio.bucket</span>=tcd-service-platform-bucket,tcd-service-platform-product-img-bucket
+<span class="pl-k">minio.url</span>=http://tcdminio:9000
+<span class="pl-k">minio.return-url</span>=http://101.37.105.91:9000
+
+<span class="pl-k">spring.servlet.multipart.max-file-size</span>=50MB
+<span class="pl-k">spring.servlet.multipart.max-request-size</span>=50MB</pre></div>
+<h3>Dockerfile</h3>
+<div class="highlight highlight-source-dockerfile"><pre class="notranslate"><span class="pl-k">FROM</span> openjdk:22
+
+<span class="pl-k">LABEL</span> author=anfioo
+
+<span class="pl-k">COPY</span> minio-0.0.1-SNAPSHOT.jar /minio-0.0.1-SNAPSHOT.jar
+
+<span class="pl-k">EXPOSE</span> 4321
+
+<span class="pl-k">ENTRYPOINT</span> [<span class="pl-s">"java"</span>,<span class="pl-s">"-jar"</span>,<span class="pl-s">"/minio-0.0.1-SNAPSHOT.jar"</span>]</pre></div>
+<h3>构建docker容器</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">docker build -t tcdminioservice <span class="pl-c1">.</span></pre></div>
+<h3>部署</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">docker run \
+--restart=always \
+--network tcdnet \
+-p 4321:4321 \
+--name tcdminioservice \
+-d tcdminioservice
+</pre></div>
+<h2>*minio界面嵌入修改（可选）</h2>
+<h3>创建并编辑文件</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate"><span class="pl-c1">cd</span> /tcdapp
+mkdir nginxConfig
+touch nginx.conf</pre></div>
+<div class="highlight highlight-source-shell"><pre class="notranslate">vim nginx.conf</pre></div>
+<h3>配置</h3>
+<div class="highlight highlight-source-nginx"><pre class="notranslate"><span class="pl-k">user</span>  nginx;
+<span class="pl-k">worker_processes</span>  auto;
+
+<span class="pl-k">error_log</span>  /var/log/nginx/error.log<span class="pl-c1"> notice</span>;
+<span class="pl-k">pid</span>        /var/run/nginx.pid;
+
+
+<span class="pl-k">events</span> {
+    <span class="pl-k">worker_connections</span>  <span class="pl-s">1024</span>;
+}
+
+
+<span class="pl-k">http</span> {
+<span class="pl-c">#    include       /etc/nginx/mime.types;</span>
+    <span class="pl-k">default_type</span>  application/octet-stream;
+
+    <span class="pl-k">log_format</span> <span class="pl-c1"> main</span>  <span class="pl-s">'<span class="pl-smi">$remote_addr</span> - <span class="pl-smi">$remote_user</span> [<span class="pl-smi">$time_local</span>] "<span class="pl-smi">$request</span>" '</span>
+                      <span class="pl-s">'<span class="pl-smi">$status</span> <span class="pl-smi">$body_bytes_sent</span> "<span class="pl-smi">$http_referer</span>" '</span>
+                      <span class="pl-s">'"<span class="pl-smi">$http_user_agent</span>" "<span class="pl-smi">$http_x_forwarded_for</span>"'</span>;
+
+    <span class="pl-k">access_log</span>  /var/log/nginx/access.log <span class="pl-c1"> main</span>;
+
+    <span class="pl-k">sendfile</span>       <span class="pl-c1"> on</span>;
+    <span class="pl-c">#tcp_nopush     on;</span>
+
+    <span class="pl-k">server</span> {
+        <span class="pl-k">listen</span>       <span class="pl-s">80</span>;
+        <span class="pl-k">server_name</span>  localhost;
+
+    <span class="pl-k">location</span> <span class="pl-en">/ </span>{
+        <span class="pl-k">proxy_pass</span> http://tcdminio:9090;  <span class="pl-c"># 将常规 HTTP 请求代理到 WebSocket 服务</span>
+        <span class="pl-k">proxy_hide_header</span> X-Frame-Options;
+    }
+    <span class="pl-c"># 处理 WebSocket 请求</span>
+    <span class="pl-k">location</span> <span class="pl-en">/ws/ </span>{
+        <span class="pl-k">proxy_pass</span> http://tcdminio:9090;  <span class="pl-c"># 将 WebSocket 请求代理到 WebSocket 服务</span>
+       <span class="pl-k">proxy_set_header</span>  X-Real-IP  <span class="pl-smi">$remote_addr</span>;
+       <span class="pl-k">proxy_set_header</span>  X-Forwarded-For <span class="pl-smi">$proxy_add_x_forwarded_for</span>;
+       <span class="pl-k">proxy_http_version</span> <span class="pl-c1">1.1</span>;
+       <span class="pl-k">proxy_set_header</span> Upgrade <span class="pl-smi">$http_upgrade</span>;
+       <span class="pl-k">proxy_set_header</span> Connection <span class="pl-s">"upgrade"</span>;
+	   <span class="pl-k">proxy_cache_bypass</span> <span class="pl-smi">$http_upgrade</span>;
+       <span class="pl-k">proxy_set_header</span> Host <span class="pl-s">"127.0.0.1:9000"</span>;
+       <span class="pl-k">proxy_set_header</span> Origin <span class="pl-s">"http://127.0.0.1:9000"</span>;
+     
+    }
+        <span class="pl-k">error_page</span>   <span class="pl-s">500</span> <span class="pl-s">502</span> <span class="pl-s">503</span> <span class="pl-s">504</span>  /50x.html;
+        <span class="pl-k">location</span> <span class="pl-en">= /50x.html </span>{
+            <span class="pl-k">root</span>   html;
+        }
+    }
+    <span class="pl-k">keepalive_timeout</span>  <span class="pl-s">65</span>;
+
+    <span class="pl-c">#gzip  on;</span>
+
+    <span class="pl-k">include</span> /etc/nginx/conf.d/*.conf;
+}
+</pre></div>
+<h3>部署</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">docker run -d \
+  --network tcdnet\
+  --name tcdnginx \
+  -p 7777:80 \
+  -v /tcdapp/nginxConfig:/etc/nginx \
+  nginx:stable-alpine3.20-perl</pre></div>
+<h3>说明</h3>
+<p>原有的minio web ui 无法嵌入ifarme 使用这个去掉这个特性</p>
+<h2>tcd后端服务 框架部分</h2>
+<h3>修改配置文件</h3>
+<h4>application.yml</h4>
+<p>配置文件上传路径，redis账户设置</p>
+<div class="highlight highlight-source-ini"><pre class="notranslate"><span class="pl-c"><span class="pl-c">#</span> 项目相关配置</span>
+ruoyi:
+  <span class="pl-c"><span class="pl-c">#</span> 名称</span>
+  name: RuoYi
+  <span class="pl-c"><span class="pl-c">#</span> 版本</span>
+  version: 3.8.8
+  <span class="pl-c"><span class="pl-c">#</span> 版权年份</span>
+  copyrightYear: 2024
+  <span class="pl-c"><span class="pl-c">#</span> 文件路径 示例（ Windows配置D:/ruoyi/uploadPath，Linux配置 /home/ruoyi/uploadPath）</span>
+  profile: /tcd/uploadPath
+  <span class="pl-c"><span class="pl-c">#</span> 获取ip地址开关</span>
+  addressEnabled: false
+  <span class="pl-c"><span class="pl-c">#</span> 验证码类型 math 数字计算 char 字符验证</span>
+  captchaType: math
+
+<span class="pl-c"><span class="pl-c">#</span> 开发环境配置</span>
+server:
+  <span class="pl-c"><span class="pl-c">#</span> 服务器的HTTP端口，默认为8080</span>
+  port: 1234
+  servlet:
+    <span class="pl-c"><span class="pl-c">#</span> 应用的访问路径</span>
+    context-path: /
+  tomcat:
+    <span class="pl-c"><span class="pl-c">#</span> tomcat的URI编码</span>
+    uri-encoding: UTF-8
+    <span class="pl-c"><span class="pl-c">#</span> 连接数满后的排队数，默认为100</span>
+    accept-count: 1000
+    threads:
+      <span class="pl-c"><span class="pl-c">#</span> tomcat最大线程数，默认为200</span>
+      max: 800
+      <span class="pl-c"><span class="pl-c">#</span> Tomcat启动初始化的线程数，默认值10</span>
+      min-spare: 100
+
+<span class="pl-c"><span class="pl-c">#</span> 日志配置</span>
+logging:
+  level:
+    com.ruoyi: debug
+    org.springframework: warn
+
+<span class="pl-c"><span class="pl-c">#</span> 用户配置</span>
+user:
+  password:
+    <span class="pl-c"><span class="pl-c">#</span> 密码最大错误次数</span>
+    maxRetryCount: 5
+    <span class="pl-c"><span class="pl-c">#</span> 密码锁定时间（默认10分钟）</span>
+    lockTime: 10
+
+<span class="pl-c"><span class="pl-c">#</span> Spring配置</span>
+spring:
+  <span class="pl-c"><span class="pl-c">#</span> 资源信息</span>
+  messages:
+    <span class="pl-c"><span class="pl-c">#</span> 国际化资源文件路径</span>
+    basename: i18n/messages
+  profiles:
+    active: druid
+  <span class="pl-c"><span class="pl-c">#</span> 文件上传</span>
+  servlet:
+    multipart:
+      <span class="pl-c"><span class="pl-c">#</span> 单个文件大小</span>
+      max-file-size: 10MB
+      <span class="pl-c"><span class="pl-c">#</span> 设置总上传的文件大小</span>
+      max-request-size: 20MB
+  <span class="pl-c"><span class="pl-c">#</span> 服务模块</span>
+  devtools:
+    restart:
+      <span class="pl-c"><span class="pl-c">#</span> 热部署开关</span>
+      enabled: true
+  <span class="pl-c"><span class="pl-c">#</span> redis 配置</span>
+  redis:
+    <span class="pl-c"><span class="pl-c">#</span> 地址</span>
+    host: tcdredis
+    <span class="pl-c"><span class="pl-c">#</span> 端口，默认为6379</span>
+    port: 6379
+    <span class="pl-c"><span class="pl-c">#</span> 数据库索引</span>
+    database: 0
+    <span class="pl-c"><span class="pl-c">#</span> 密码</span>
+    password: 123456
+    <span class="pl-c"><span class="pl-c">#</span> 连接超时时间</span>
+    timeout: 10s
+    lettuce:
+      pool:
+        <span class="pl-c"><span class="pl-c">#</span> 连接池中的最小空闲连接</span>
+        min-idle: 0
+        <span class="pl-c"><span class="pl-c">#</span> 连接池中的最大空闲连接</span>
+        max-idle: 8
+        <span class="pl-c"><span class="pl-c">#</span> 连接池的最大数据库连接数</span>
+        max-active: 8
+        <span class="pl-c"><span class="pl-c">#</span> #连接池最大阻塞等待时间（使用负值表示没有限制）</span>
+        max-wait: -1ms
+
+<span class="pl-c"><span class="pl-c">#</span> token配置</span>
+token:
+  <span class="pl-c"><span class="pl-c">#</span> 令牌自定义标识</span>
+  header: Authorization
+  <span class="pl-c"><span class="pl-c">#</span> 令牌密钥</span>
+  secret: abcdefghijklmnopqrstuvwxyz
+  <span class="pl-c"><span class="pl-c">#</span> 令牌有效期（默认30分钟）</span>
+  expireTime: 30
+
+<span class="pl-c"><span class="pl-c">#</span> MyBatis配置</span>
+mybatis:
+  <span class="pl-c"><span class="pl-c">#</span> 搜索指定包别名</span>
+  typeAliasesPackage: com.ruoyi.**.domain
+  <span class="pl-c"><span class="pl-c">#</span> 配置mapper的扫描，找到所有的mapper.xml映射文件</span>
+  mapperLocations: classpath*:mapper/**/*Mapper.xml
+  <span class="pl-c"><span class="pl-c">#</span> 加载全局的配置文件</span>
+  configLocation: classpath:mybatis/mybatis-config.xml
+
+<span class="pl-c"><span class="pl-c">#</span> PageHelper分页插件</span>
+pagehelper:
+  helperDialect: mysql
+  supportMethodsArguments: true
+  params: <span class="pl-k">count</span>=countSql
+
+<span class="pl-c"><span class="pl-c">#</span> Swagger配置</span>
+swagger:
+  <span class="pl-c"><span class="pl-c">#</span> 是否开启swagger</span>
+  enabled: true
+  <span class="pl-c"><span class="pl-c">#</span> 请求前缀</span>
+  pathMapping: /dev-api
+
+
+<span class="pl-c"><span class="pl-c">#</span> 防止XSS攻击</span>
+xss:
+  <span class="pl-c"><span class="pl-c">#</span> 过滤开关</span>
+  enabled: true
+  <span class="pl-c"><span class="pl-c">#</span> 排除链接（多个用逗号分隔）</span>
+  excludes: /system/notice
+  <span class="pl-c"><span class="pl-c">#</span> 匹配链接</span>
+  urlPatterns: /system/*,/monitor/*,/tool/*
+<span class="pl-c"><span class="pl-c">#</span></span>
+<span class="pl-c"><span class="pl-c">#</span>qiniu:</span>
+<span class="pl-c"><span class="pl-c">#</span>  accessKey: i0GpVSe_nfw2b6Igrra1YIi2AR88LmC4SZfmsPdV</span>
+<span class="pl-c"><span class="pl-c">#</span>  secretKey: ieJwYUYvKVioCiGeLQG1ENWuV7hjp8mC6sbZyt2D</span>
+<span class="pl-c"><span class="pl-c">#</span>  bucket: tcd-service-text1</span>
+<span class="pl-c"><span class="pl-c">#</span>  url: http://spv0e9fwq.hn-bkt.clouddn.com</span>
+</pre></div>
+<h4>application-druid.yml</h4>
+<p>使用自己的数据库架构名称 这里使用的是tcdmysql</p>
+<div class="highlight highlight-source-ini"><pre class="notranslate"><span class="pl-c"><span class="pl-c">#</span> 数据源配置</span>
+spring:
+    datasource:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driverClassName: com.mysql.cj.jdbc.Driver
+        druid:
+            <span class="pl-c"><span class="pl-c">#</span> 主库数据源</span>
+            master:
+                url: jdbc:mysql://tcdmysql:3306/tcd?<span class="pl-k">useUnicode</span>=true&amp;<span class="pl-k">characterEncoding</span>=utf8&amp;<span class="pl-k">zeroDateTimeBehavior</span>=convertToNull&amp;<span class="pl-k">useSSL</span>=true&amp;<span class="pl-k">serverTimezone</span>=GMT%2B8
+                username: root
+                password: a12bCd3_W45pUq6
+            <span class="pl-c"><span class="pl-c">#</span> 从库数据源</span>
+            slave:
+                <span class="pl-c"><span class="pl-c">#</span> 从数据源开关/默认关闭</span>
+                enabled: false
+                url: 
+                username: 
+                password: 
+            <span class="pl-c"><span class="pl-c">#</span> 初始连接数</span>
+            initialSize: 5
+            <span class="pl-c"><span class="pl-c">#</span> 最小连接池数量</span>
+            minIdle: 10
+            <span class="pl-c"><span class="pl-c">#</span> 最大连接池数量</span>
+            maxActive: 20
+            <span class="pl-c"><span class="pl-c">#</span> 配置获取连接等待超时的时间</span>
+            maxWait: 60000
+            <span class="pl-c"><span class="pl-c">#</span> 配置连接超时时间</span>
+            connectTimeout: 30000
+            <span class="pl-c"><span class="pl-c">#</span> 配置网络超时时间</span>
+            socketTimeout: 60000
+            <span class="pl-c"><span class="pl-c">#</span> 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒</span>
+            timeBetweenEvictionRunsMillis: 60000
+            <span class="pl-c"><span class="pl-c">#</span> 配置一个连接在池中最小生存的时间，单位是毫秒</span>
+            minEvictableIdleTimeMillis: 300000
+            <span class="pl-c"><span class="pl-c">#</span> 配置一个连接在池中最大生存的时间，单位是毫秒</span>
+            maxEvictableIdleTimeMillis: 900000
+            <span class="pl-c"><span class="pl-c">#</span> 配置检测连接是否有效</span>
+            validationQuery: SELECT 1 FROM DUAL
+            testWhileIdle: true
+            testOnBorrow: false
+            testOnReturn: false
+            webStatFilter: 
+                enabled: true
+            statViewServlet:
+                enabled: true
+                <span class="pl-c"><span class="pl-c">#</span> 设置白名单，不填则允许所有访问</span>
+                allow:
+                url-pattern: /druid/*
+                <span class="pl-c"><span class="pl-c">#</span> 控制台管理用户名和密码</span>
+                login-username: ruoyi
+                login-password: 123456
+            filter:
+                stat:
+                    enabled: true
+                    <span class="pl-c"><span class="pl-c">#</span> 慢SQL记录</span>
+                    log-slow-sql: true
+                    slow-sql-millis: 1000
+                    merge-sql: true
+                wall:
+                    config:
+                        multi-statement-allow: true</pre></div>
+<h3>Dockerfile</h3>
+<div class="highlight highlight-source-dockerfile"><pre class="notranslate"><span class="pl-k">FROM</span> openjdk:17
+
+<span class="pl-k">LABEL</span> author=anfioo
+
+<span class="pl-k">COPY</span> ruoyi-admin.jar /ruoyi-admin.jar
+<span class="pl-k">RUN</span> mkdir -p /tcd/uploadPath
+
+<span class="pl-k">EXPOSE</span> 1234
+
+<span class="pl-k">ENTRYPOINT</span> [<span class="pl-s">"java"</span>,<span class="pl-s">"-jar"</span>,<span class="pl-s">"/ruoyi-admin.jar"</span>]</pre></div>
+<h3>构建docker容器</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">docker build -t tcd <span class="pl-c1">.</span></pre></div>
+<h3>创建文件夹</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">mkdir /tcdapp/tcd</pre></div>
+<h3>部署</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">docker run \
+--restart=always \
+-p 1234:1234 \
+--network tcdnet \
+--name tcd \
+-v /tcdapp/tcd:/tcd/uploadPath \
+-d tcd:latest</pre></div>
+<h2>tcd后端服务 模型训练部分</h2>
+<h3>修改配置文件</h3>
+<h4>application.properties</h4>
+<div class="highlight highlight-source-ini"><pre class="notranslate"><span class="pl-c"><span class="pl-c">#</span>spring.application.name=model-service</span>
+<span class="pl-c"><span class="pl-c">#</span>server.port=5321</span>
+<span class="pl-c"><span class="pl-c">#</span>spring.servlet.multipart.max-file-size=50MB</span>
+<span class="pl-c"><span class="pl-c">#</span>spring.servlet.multipart.max-request-size=50MB</span>
+<span class="pl-c"><span class="pl-c">#</span>params.backup-parent-folder=C:\\Users\\34859\\Desktop\\TCDServicePlatform-2025-2-12\\TCDServicePlatform\\model-service-py</span>
+<span class="pl-c"><span class="pl-c">#</span>params.bak-parent-folder=C:\\Users\\34859\\Desktop\\TCDServicePlatform-2025-2-12\\TCDServicePlatform\\model-service-py\\backup</span>
+<span class="pl-c"><span class="pl-c">#</span>params.restore-parent-folder=C:\\Users\\34859\\Desktop\\TCDServicePlatform-2025-2-12\\TCDServicePlatform\\model-service-py</span>
+<span class="pl-c"><span class="pl-c">#</span>params.SEPARATOR==-=-=QwErTyUiOpAsDfGhJkLzXcVbNm=-=-=</span>
+<span class="pl-c"><span class="pl-c">#</span>params.python-interpreter=C:\\Apps\\Development\\anaconda3\\envs\\Matplotlib\\tcdgpu\\python.exe</span>
+<span class="pl-c"><span class="pl-c">#</span>params.tensorboard-path=C:\\Apps\\Development\\anaconda3\\envs\\Matplotlib\\tcdgpu\\Scripts\\tensorboard.exe</span>
+<span class="pl-c"><span class="pl-c">#</span>params.tensorboard-port=7765</span>
+<span class="pl-c"><span class="pl-c">#</span>params.working-folder=C:\\Users\\34859\\Desktop\\TCDServicePlatform-2025-2-12\\TCDServicePlatform\\model-service-py\\model_1</span>
+<span class="pl-c"><span class="pl-c">#</span>params.custom-main-train-path="C:\\Users\\34859\\Desktop\\TCDServicePlatform-2025-2-12\\TCDServicePlatform\\model-service-py\\model_1\\main_c.py"</span>
+<span class="pl-c"><span class="pl-c">#</span>params.default-main-train-path="C:\\Users\\34859\\Desktop\\TCDServicePlatform-2025-2-12\\TCDServicePlatform\\model-service-py\\model_1\\main_d.py"</span>
+<span class="pl-c"><span class="pl-c">#</span>file.root-path=C:\\Users\\34859\\Desktop\\TCDServicePlatform-2025-2-12\\TCDServicePlatform\\model-service-py\\model_1\\logs</span>
+
+
+
+<span class="pl-k">spring.application.name</span>=model-service
+<span class="pl-k">server.port</span>=5321
+<span class="pl-k">spring.servlet.multipart.max-file-size</span>=50MB
+<span class="pl-k">spring.servlet.multipart.max-request-size</span>=50MB
+<span class="pl-k">params.backup-parent-folder</span>=/app/model-service-py
+<span class="pl-k">params.bak-parent-folder</span>=/app/model-service-py/backup
+<span class="pl-k">params.restore-parent-folder</span>=/app/model-service-py
+<span class="pl-k">params.SEPARATOR</span>==-=-=<span class="pl-k">QwErTyUiOpAsDfGhJkLzXcVbNm</span>=-=-=
+<span class="pl-k">params.python-interpreter</span>=/opt/conda/envs/tcd/bin/python
+<span class="pl-k">params.tensorboard-path</span>=/opt/conda/envs/tcd/bin/tensorboard
+<span class="pl-k">params.tensorboard-port</span>=7765
+<span class="pl-k">params.working-folder</span>=/app/model-service-py/model_1
+<span class="pl-k">params.custom-main-train-path</span>=/app/model-service-py/model_1/main_c.py
+<span class="pl-k">params.default-main-train-path</span>=/app/model-service-py/model_1/main_d.py
+<span class="pl-k">file.root-path</span>=/app/model-service-py/model_1/logs
+</pre></div>
+<h3>上传部署所需的文件</h3>
+<h4>environment.yml</h4>
+<div class="highlight highlight-source-yaml"><pre class="notranslate"><span class="pl-ent">name</span>: <span class="pl-s">tcd</span>
+<span class="pl-ent">channels</span>:
+  - <span class="pl-s">https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free</span>
+  - <span class="pl-s">https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main</span>
+<span class="pl-ent">dependencies</span>:
+  - <span class="pl-s">_libgcc_mutex=0.1</span>
+  - <span class="pl-s">_openmp_mutex=5.1</span>
+  - <span class="pl-s">_tflow_select=2.3.0</span>
+  - <span class="pl-s">abseil-cpp=20211102.0</span>
+  - <span class="pl-s">absl-py=2.1.0</span>
+  - <span class="pl-s">aiohappyeyeballs=2.4.0</span>
+  - <span class="pl-s">aiohttp=3.10.5</span>
+  - <span class="pl-s">aiosignal=1.2.0</span>
+  - <span class="pl-s">astunparse=1.6.3</span>
+  - <span class="pl-s">async-timeout=4.0.3</span>
+  - <span class="pl-s">attrs=24.2.0</span>
+  - <span class="pl-s">blas=1.0</span>
+  - <span class="pl-s">blinker=1.6.2</span>
+  - <span class="pl-s">bottleneck=1.3.7</span>
+  - <span class="pl-s">brotli=1.0.9</span>
+  - <span class="pl-s">brotli-bin=1.0.9</span>
+  - <span class="pl-s">brotli-python=1.0.9</span>
+  - <span class="pl-s">bzip2=1.0.8</span>
+  - <span class="pl-s">c-ares=1.19.1</span>
+  - <span class="pl-s">ca-certificates=2025.2.25</span>
+  - <span class="pl-s">cachetools=5.3.3</span>
+  - <span class="pl-s">certifi=2024.8.30</span>
+  - <span class="pl-s">cffi=1.17.1</span>
+  - <span class="pl-s">charset-normalizer=3.3.2</span>
+  - <span class="pl-s">click=8.1.7</span>
+  - <span class="pl-s">contourpy=1.0.5</span>
+  - <span class="pl-s">cryptography=41.0.3</span>
+  - <span class="pl-s">cycler=0.11.0</span>
+  - <span class="pl-s">cyrus-sasl=2.1.28</span>
+  - <span class="pl-s">dbus=1.13.18</span>
+  - <span class="pl-s">expat=2.6.4</span>
+  - <span class="pl-s">flatbuffers=24.3.25</span>
+  - <span class="pl-s">fontconfig=2.14.1</span>
+  - <span class="pl-s">fonttools=4.51.0</span>
+  - <span class="pl-s">freetype=2.12.1</span>
+  - <span class="pl-s">frozenlist=1.4.0</span>
+  - <span class="pl-s">gast=0.4.0</span>
+  - <span class="pl-s">giflib=5.2.2</span>
+  - <span class="pl-s">glib=2.78.4</span>
+  - <span class="pl-s">glib-tools=2.78.4</span>
+  - <span class="pl-s">google-auth=2.29.0</span>
+  - <span class="pl-s">google-auth-oauthlib=0.5.2</span>
+  - <span class="pl-s">google-pasta=0.2.0</span>
+  - <span class="pl-s">grpc-cpp=1.48.2</span>
+  - <span class="pl-s">grpcio=1.48.2</span>
+  - <span class="pl-s">gst-plugins-base=1.14.1</span>
+  - <span class="pl-s">gstreamer=1.14.1</span>
+  - <span class="pl-s">h5py=3.11.0</span>
+  - <span class="pl-s">hdf5=1.12.1</span>
+  - <span class="pl-s">icu=58.2</span>
+  - <span class="pl-s">idna=3.7</span>
+  - <span class="pl-s">importlib-metadata=7.0.1</span>
+  - <span class="pl-s">importlib_resources=6.4.0</span>
+  - <span class="pl-s">intel-openmp=2023.1.0</span>
+  - <span class="pl-s">joblib=1.4.2</span>
+  - <span class="pl-s">jpeg=9e</span>
+  - <span class="pl-s">keras=2.12.0</span>
+  - <span class="pl-s">keras-preprocessing=1.1.2</span>
+  - <span class="pl-s">kiwisolver=1.4.4</span>
+  - <span class="pl-s">krb5=1.20.1</span>
+  - <span class="pl-s">lcms2=2.16</span>
+  - <span class="pl-s">ld_impl_linux-64=2.40</span>
+  - <span class="pl-s">lerc=4.0.0</span>
+  - <span class="pl-s">libbrotlicommon=1.0.9</span>
+  - <span class="pl-s">libbrotlidec=1.0.9</span>
+  - <span class="pl-s">libbrotlienc=1.0.9</span>
+  - <span class="pl-s">libclang=14.0.6</span>
+  - <span class="pl-s">libclang13=14.0.6</span>
+  - <span class="pl-s">libcups=2.4.2</span>
+  - <span class="pl-s">libcurl=8.2.1</span>
+  - <span class="pl-s">libdeflate=1.22</span>
+  - <span class="pl-s">libedit=3.1.20230828</span>
+  - <span class="pl-s">libev=4.33</span>
+  - <span class="pl-s">libffi=3.4.4</span>
+  - <span class="pl-s">libgcc-ng=11.2.0</span>
+  - <span class="pl-s">libgfortran-ng=11.2.0</span>
+  - <span class="pl-s">libgfortran5=11.2.0</span>
+  - <span class="pl-s">libglib=2.78.4</span>
+  - <span class="pl-s">libgomp=11.2.0</span>
+  - <span class="pl-s">libiconv=1.16</span>
+  - <span class="pl-s">libllvm14=14.0.6</span>
+  - <span class="pl-s">libnghttp2=1.52.0</span>
+  - <span class="pl-s">libpng=1.6.39</span>
+  - <span class="pl-s">libpq=12.15</span>
+  - <span class="pl-s">libprotobuf=3.20.3</span>
+  - <span class="pl-s">libssh2=1.10.0</span>
+  - <span class="pl-s">libstdcxx-ng=11.2.0</span>
+  - <span class="pl-s">libtiff=4.5.1</span>
+  - <span class="pl-s">libuuid=1.41.5</span>
+  - <span class="pl-s">libwebp-base=1.3.2</span>
+  - <span class="pl-s">libxcb=1.15</span>
+  - <span class="pl-s">libxkbcommon=1.0.1</span>
+  - <span class="pl-s">libxml2=2.10.4</span>
+  - <span class="pl-s">lz4-c=1.9.4</span>
+  - <span class="pl-s">markdown=3.4.1</span>
+  - <span class="pl-s">markupsafe=2.1.3</span>
+  - <span class="pl-s">matplotlib=3.7.2</span>
+  - <span class="pl-s">matplotlib-base=3.7.2</span>
+  - <span class="pl-s">mkl=2023.1.0</span>
+  - <span class="pl-s">mkl-service=2.4.0</span>
+  - <span class="pl-s">mkl_fft=1.3.8</span>
+  - <span class="pl-s">mkl_random=1.2.4</span>
+  - <span class="pl-s">multidict=6.0.4</span>
+  - <span class="pl-s">mysql=5.7.24</span>
+  - <span class="pl-s">ncurses=6.4</span>
+  - <span class="pl-s">numexpr=2.8.4</span>
+  - <span class="pl-s">numpy=1.23.5</span>
+  - <span class="pl-s">numpy-base=1.23.5</span>
+  - <span class="pl-s">oauthlib=3.2.2</span>
+  - <span class="pl-s">openjpeg=2.5.2</span>
+  - <span class="pl-s">openssl=1.1.1w</span>
+  - <span class="pl-s">opt_einsum=3.3.0</span>
+  - <span class="pl-s">packaging=24.1</span>
+  - <span class="pl-s">pandas=2.0.3</span>
+  - <span class="pl-s">pcre2=10.42</span>
+  - <span class="pl-s">pillow=10.4.0</span>
+  - <span class="pl-s">pip=24.2</span>
+  - <span class="pl-s">platformdirs=3.10.0</span>
+  - <span class="pl-s">ply=3.11</span>
+  - <span class="pl-s">pooch=1.7.0</span>
+  - <span class="pl-s">protobuf=3.20.3</span>
+  - <span class="pl-s">pyasn1=0.4.8</span>
+  - <span class="pl-s">pyasn1-modules=0.2.8</span>
+  - <span class="pl-s">pycparser=2.21</span>
+  - <span class="pl-s">pyjwt=2.8.0</span>
+  - <span class="pl-s">pyopenssl=23.2.0</span>
+  - <span class="pl-s">pyparsing=3.0.9</span>
+  - <span class="pl-s">pyqt=5.15.10</span>
+  - <span class="pl-s">pyqt5-sip=12.13.0</span>
+  - <span class="pl-s">pysocks=1.7.1</span>
+  - <span class="pl-s">python=3.8.18</span>
+  - <span class="pl-s">python-dateutil=2.9.0post0</span>
+  - <span class="pl-s">python-flatbuffers=24.3.25</span>
+  - <span class="pl-s">python-tzdata=2023.3</span>
+  - <span class="pl-s">pytz=2024.1</span>
+  - <span class="pl-s">qt-main=5.15.2</span>
+  - <span class="pl-s">re2=2022.04.01</span>
+  - <span class="pl-s">readline=8.2</span>
+  - <span class="pl-s">requests=2.32.3</span>
+  - <span class="pl-s">requests-oauthlib=2.0.0</span>
+  - <span class="pl-s">rsa=4.7.2</span>
+  - <span class="pl-s">scikit-learn=1.3.0</span>
+  - <span class="pl-s">scipy=1.10.1</span>
+  - <span class="pl-s">setuptools=75.1.0</span>
+  - <span class="pl-s">sip=6.7.12</span>
+  - <span class="pl-s">six=1.16.0</span>
+  - <span class="pl-s">snappy=1.2.1</span>
+  - <span class="pl-s">sqlite=3.45.3</span>
+  - <span class="pl-s">tbb=2021.8.0</span>
+  - <span class="pl-s">tensorboard=2.12.1</span>
+  - <span class="pl-s">tensorboard-data-server=0.7.0</span>
+  - <span class="pl-s">tensorboard-plugin-wit=1.8.1</span>
+  - <span class="pl-s">tensorflow=2.12.0</span>
+  - <span class="pl-s">tensorflow-base=2.12.0</span>
+  - <span class="pl-s">tensorflow-estimator=2.12.0</span>
+  - <span class="pl-s">termcolor=2.1.0</span>
+  - <span class="pl-s">threadpoolctl=3.5.0</span>
+  - <span class="pl-s">tk=8.6.14</span>
+  - <span class="pl-s">tomli=2.0.1</span>
+  - <span class="pl-s">tornado=6.4.1</span>
+  - <span class="pl-s">typing_extensions=4.11.0</span>
+  - <span class="pl-s">unicodedata2=15.1.0</span>
+  - <span class="pl-s">urllib3=2.2.3</span>
+  - <span class="pl-s">werkzeug=3.0.3</span>
+  - <span class="pl-s">wheel=0.44.0</span>
+  - <span class="pl-s">wrapt=1.14.1</span>
+  - <span class="pl-s">xz=5.6.4</span>
+  - <span class="pl-s">yarl=1.11.0</span>
+  - <span class="pl-s">zipp=3.20.2</span>
+  - <span class="pl-s">zlib=1.2.13</span>
+  - <span class="pl-s">zstd=1.5.6</span>
+
+</pre></div>
+<h3>Dockerfile</h3>
+<div class="highlight highlight-source-dockerfile"><pre class="notranslate"><span class="pl-k">FROM</span> continuumio/miniconda3:latest
+
+<span class="pl-k">LABEL</span> author=anfioo
+
+<span class="pl-c"><span class="pl-c">#</span> 设置清华APT源</span>
+<span class="pl-k">RUN</span> printf <span class="pl-s">"deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bullseye main contrib non-free<span class="pl-c1">\n</span>deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bullseye-updates main contrib non-free<span class="pl-c1">\n</span>deb https://mirrors.tuna.tsinghua.edu.cn/debian-security bullseye-security main contrib non-free<span class="pl-c1">\n</span>"</span> &gt; /etc/apt/sources.list
+
+<span class="pl-c"><span class="pl-c">#</span> 修复基础环境</span>
+<span class="pl-k">RUN</span> mkdir -p /usr/share/man/man1 &amp;&amp; \
+    apt-get update -q &amp;&amp; \
+    apt-get install -y --no-install-recommends \
+        man-db \
+        manpages-dev \
+        software-properties-common \
+        ca-certificates-java &amp;&amp; \
+    dpkg --configure -a
+
+<span class="pl-c"><span class="pl-c">#</span> 安装JDK</span>
+<span class="pl-k">RUN</span> apt-get update -q &amp;&amp; \
+    apt-get install -y --no-install-recommends \
+        openjdk-17-jre-headless=17.0.14+7-1~deb11u1 \
+        openjdk-17-jre=17.0.14+7-1~deb11u1 \
+        openjdk-17-jdk-headless=17.0.14+7-1~deb11u1 \
+        openjdk-17-jdk=17.0.14+7-1~deb11u1 &amp;&amp; \
+    apt-get clean &amp;&amp; \
+    rm -rf /var/lib/apt/lists/*
+
+<span class="pl-c"><span class="pl-c">#</span> 创建应用目录并复制文件</span>
+<span class="pl-k">RUN</span> mkdir -p /app/model-service-py
+<span class="pl-k">WORKDIR</span> /app
+<span class="pl-k">COPY</span> model-service-0.0.1-SNAPSHOT.jar ./
+<span class="pl-k">ADD</span> model-service-py.tar /app/
+
+<span class="pl-c"><span class="pl-c">#</span> 复制并安装Conda环境</span>
+<span class="pl-k">COPY</span> environment.yml .
+<span class="pl-k">RUN</span> conda config --set show_channel_urls yes &amp;&amp; \
+    conda env create -f environment.yml &amp;&amp; \
+    conda clean -afy
+
+<span class="pl-c"><span class="pl-c">#</span> 设置环境变量</span>
+<span class="pl-k">ENV</span> PATH=<span class="pl-s">"/opt/conda/envs/tcd/bin:$PATH"</span> \
+    JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+
+<span class="pl-k">EXPOSE</span> 5321 7765
+
+<span class="pl-k">ENTRYPOINT</span> [<span class="pl-s">"java"</span>, <span class="pl-s">"-jar"</span>, <span class="pl-s">"/app/model-service-0.0.1-SNAPSHOT.jar"</span>]
+</pre></div>
+<h3>构建docker容器</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">docker build -t tcdpy <span class="pl-c1">.</span></pre></div>
+<h3>创建文件夹</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">mkdir tcdpy</pre></div>
+<h3>部署</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">docker run \
+--restart=always \
+--network tcdnet \
+-p 5321:5321 \
+-p 7765:7765 \
+-v /tcdapp/tcdpy:/app/model-service-py \
+--name tcdpy \
+-d tcdpy:latest</pre></div>
+<h2>tcd前端服务</h2>
+<h3>编辑配置文件</h3>
+<h4>nginx.conf</h4>
+<div class="highlight highlight-source-nginx"><pre class="notranslate"><span class="pl-k">user</span>  nginx;
+<span class="pl-k">worker_processes</span>  auto;
+
+<span class="pl-k">error_log</span>  /var/log/nginx/error.log<span class="pl-c1"> notice</span>;
+<span class="pl-k">pid</span>        /var/run/nginx.pid;
+
+
+<span class="pl-k">events</span> {
+    <span class="pl-k">worker_connections</span>  <span class="pl-s">1024</span>;
+}
+
+
+<span class="pl-k">http</span> {
+    <span class="pl-k">include</span>       /etc/nginx/mime.types;
+    <span class="pl-k">default_type</span>  application/octet-stream;
+
+    <span class="pl-k">log_format</span> <span class="pl-c1"> main</span>  <span class="pl-s">'<span class="pl-smi">$remote_addr</span> - <span class="pl-smi">$remote_user</span> [<span class="pl-smi">$time_local</span>] "<span class="pl-smi">$request</span>" '</span>
+                      <span class="pl-s">'<span class="pl-smi">$status</span> <span class="pl-smi">$body_bytes_sent</span> "<span class="pl-smi">$http_referer</span>" '</span>
+                      <span class="pl-s">'"<span class="pl-smi">$http_user_agent</span>" "<span class="pl-smi">$http_x_forwarded_for</span>"'</span>;
+
+    <span class="pl-k">access_log</span>  /var/log/nginx/access.log <span class="pl-c1"> main</span>;
+
+    <span class="pl-k">sendfile</span>       <span class="pl-c1"> on</span>;
+    <span class="pl-c">#tcp_nopush     on;</span>
+
+    <span class="pl-k">server</span> {
+        <span class="pl-k">listen</span>       <span class="pl-s">66</span>;
+        <span class="pl-k">server_name</span>  localhost;
+
+    <span class="pl-k">location</span> <span class="pl-en">/ </span>{
+        <span class="pl-k">root</span> /usr/share/nginx/html;
+        <span class="pl-k">index</span> index.html index.html;
+        <span class="pl-k">try_files</span> <span class="pl-smi">$uri</span> <span class="pl-smi">$uri</span>/ /index.html;
+    }
+	<span class="pl-k">location</span> <span class="pl-en">/prod-api/ </span>{
+        <span class="pl-k">proxy_pass</span> http://tcd:1234/;
+	}
+
+			  <span class="pl-c"># 配置 /upload 路径代理</span>
+    <span class="pl-k">location</span> <span class="pl-en">/upload </span>{
+        <span class="pl-k">proxy_pass</span> http://tcdminioservice:4321/upload;  <span class="pl-c"># 代理到后端</span>
+
+    }
+
+    <span class="pl-c"># 配置 /uploadProductImg 路径代理</span>
+    <span class="pl-k">location</span> <span class="pl-en">/uploadProductImg </span>{
+        <span class="pl-k">proxy_pass</span> http://tcdminioservice:4321/uploadProductImg;  <span class="pl-c"># 代理到后端</span>
+    }
+
+
+    }
+    <span class="pl-k">keepalive_timeout</span>  <span class="pl-s">65</span>;
+
+    <span class="pl-c">#gzip  on;</span>
+
+    <span class="pl-k">include</span> /etc/nginx/conf.d/*.conf;
+}
+</pre></div>
+<h3>Dockerfile</h3>
+<div class="highlight highlight-source-dockerfile"><pre class="notranslate"><span class="pl-k">FROM</span> nginx:stable-alpine3.20-perl
+
+<span class="pl-k">MAINTAINER</span> anfioo
+
+<span class="pl-k">COPY</span> dist/ usr/share/nginx/html/
+<span class="pl-k">COPY</span> nginx.conf /etc/nginx/nginx.conf
+
+<span class="pl-k">EXPOSE</span> 66
+<span class="pl-k">ENTRYPOINT</span> [<span class="pl-s">"nginx"</span>,<span class="pl-s">"-g"</span>,<span class="pl-s">"daemon off;"</span>]</pre></div>
+<h3>构建docker容器</h3>
+<div class="highlight highlight-source-shell"><pre class="notranslate">docker build -t tcdui <span class="pl-c1">.</span></pre></div>
+<h3>部署</h3>
+<pre class="notranslate"><code class="notranslate">docker run \
+--restart=always \
+--network tcdnet \
+-p 66:66 \
+--name tcdui \
+-d tcdui:latest
+</code></pre></div>
+<div style="font-size:small;margin-top:8px;float:right;"></div>
+
+<button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">评论</button>
+<div class="comments" id="comments"></div>
+
+</div>
+    <div id="footer"><div id="footer1">Copyright © <span id="copyrightYear"></span> <a href="https://Anfioo.github.io">Blog Title</a></div>
+<div id="footer2">
+    <span id="runday"></span><span>Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank">Gmeek</a></span>
+</div>
+
+<script>
+var now=new Date();
+document.getElementById("copyrightYear").innerHTML=now.getFullYear();
+
+if(""!=""){
+    var startSite=new Date("");
+    var diff=now.getTime()-startSite.getTime();
+    var diffDay=Math.floor(diff/(1000*60*60*24));
+    document.getElementById("runday").innerHTML="网站运行"+diffDay+"天"+" • ";
+}
+</script></div>
+</body>
+<script>
+var IconList={'sun': 'M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM8 12a4 4 0 100-8 4 4 0 000 8zM8 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V.75A.75.75 0 018 0zm0 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM2.343 2.343a.75.75 0 011.061 0l1.06 1.061a.75.75 0 01-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zm9.193 9.193a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061l-1.061-1.06a.75.75 0 010-1.061zM16 8a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5A.75.75 0 0116 8zM3 8a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h1.5A.75.75 0 013 8zm10.657-5.657a.75.75 0 010 1.061l-1.061 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zm-9.193 9.193a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 11-1.061-1.06l1.06-1.061a.75.75 0 011.061 0z', 'moon': 'M9.598 1.591a.75.75 0 01.785-.175 7 7 0 11-8.967 8.967.75.75 0 01.961-.96 5.5 5.5 0 007.046-7.046.75.75 0 01.175-.786zm1.616 1.945a7 7 0 01-7.678 7.678 5.5 5.5 0 107.678-7.678z', 'sync': 'M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z', 'home': 'M6.906.664a1.749 1.749 0 0 1 2.187 0l5.25 4.2c.415.332.657.835.657 1.367v7.019A1.75 1.75 0 0 1 13.25 15h-3.5a.75.75 0 0 1-.75-.75V9H7v5.25a.75.75 0 0 1-.75.75h-3.5A1.75 1.75 0 0 1 1 13.25V6.23c0-.531.242-1.034.657-1.366l5.25-4.2Zm1.25 1.171a.25.25 0 0 0-.312 0l-5.25 4.2a.25.25 0 0 0-.094.196v7.019c0 .138.112.25.25.25H5.5V8.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v5.25h2.75a.25.25 0 0 0 .25-.25V6.23a.25.25 0 0 0-.094-.195Z', 'github': 'M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z', 'copy': 'M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z', 'check': 'M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z'};
+var utterancesLoad=0;
+
+let themeSettings={
+    "dark": ["dark","moon","#00f0ff","dark-blue"],
+    "light": ["light","sun","#ff5000","github-light"],
+    "auto": ["auto","sync","","preferred-color-scheme"]
+};
+function changeTheme(mode, icon, color, utheme){
+    document.documentElement.setAttribute("data-color-mode",mode);
+    document.getElementById("themeSwitch").setAttribute("d",value=IconList[icon]);
+    document.getElementById("themeSwitch").parentNode.style.color=color;
+    if(utterancesLoad==1){utterancesTheme(utheme);}
+}
+function modeSwitch(){
+    let currentMode=document.documentElement.getAttribute('data-color-mode');
+    let newMode = currentMode === "light" ? "dark" : currentMode === "dark" ? "auto" : "light";
+    localStorage.setItem("meek_theme", newMode);
+    if(themeSettings[newMode]){
+        changeTheme(...themeSettings[newMode]);
+    }
+}
+function utterancesTheme(theme){
+    const message={type:'set-theme',theme: theme};
+    const iframe=document.getElementsByClassName('utterances-frame')[0];
+    iframe.contentWindow.postMessage(message,'https://utteranc.es');
+}
+if(themeSettings[theme]){changeTheme(...themeSettings[theme]);}
+console.log("\n %c Gmeek last https://github.com/Meekdai/Gmeek \n","padding:5px 0;background:#02d81d;color:#fff");
+</script>
+
+<script>
+document.getElementById("pathHome").setAttribute("d",IconList["home"]);
+document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
+
+
+
+function openComments(){
+    cm=document.getElementById("comments");
+    cmButton=document.getElementById("cmButton");
+    cmButton.innerHTML="loading";
+    span=document.createElement("span");
+    span.setAttribute("class","AnimatedEllipsis");
+    cmButton.appendChild(span);
+
+    script=document.createElement("script");
+    script.setAttribute("src","https://utteranc.es/client.js");
+    script.setAttribute("repo","Anfioo/Anfioo.github.io");
+    script.setAttribute("issue-term","title");
+    
+    if(localStorage.getItem("meek_theme")=="dark"){script.setAttribute("theme","dark-blue");}
+    else if(localStorage.getItem("meek_theme")=="light") {script.setAttribute("theme","github-light");}
+    else{script.setAttribute("theme","preferred-color-scheme");}
+    
+    script.setAttribute("crossorigin","anonymous");
+    script.setAttribute("async","");
+    cm.appendChild(script);
+
+    int=self.setInterval("iFrameLoading()",200);
+}
+
+function iFrameLoading(){
+    var utterances=document.getElementsByClassName('utterances');
+    if(utterances.length==1){
+        if(utterances[0].style.height!=""){
+            utterancesLoad=1;
+            int=window.clearInterval(int);
+            document.getElementById("cmButton").style.display="none";
+            console.log("utterances Load OK");
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const createClipboardHTML = (codeContent, additionalClasses = '') => `
+        <pre class="notranslate"><code class="notranslate">${codeContent}</code></pre>
+        <div class="clipboard-container position-absolute right-0 top-0 ${additionalClasses}">
+            <clipboard-copy class="ClipboardButton btn m-2 p-0" role="button" style="display: inherit;">
+                <svg height="16" width="16" class="octicon octicon-copy m-2"><path d="${IconList["copy"]}"></path></svg>
+                <svg height="16" width="16" class="octicon octicon-check color-fg-success m-2 d-none"><path d="${IconList["check"]}"></path></svg>
+            </clipboard-copy>
+            <div class="copy-feedback">Copied!</div>
+        </div>
+    `;
+
+    const handleCodeElements = (selector = '') => {
+        document.querySelectorAll(selector).forEach(codeElement => {
+            const codeContent = codeElement.innerHTML;
+            const newStructure = document.createElement('div');
+            newStructure.className = 'snippet-clipboard-content position-relative overflow-auto';
+            newStructure.innerHTML = createClipboardHTML(codeContent);
+
+            const parentElement = codeElement.parentElement;
+            if (selector.includes('highlight')) {
+                parentElement.insertBefore(newStructure, codeElement.nextSibling);
+                parentElement.removeChild(codeElement);
+            } else {
+                parentElement.parentElement.replaceChild(newStructure, parentElement);
+            }
+        });
+    };
+
+    handleCodeElements('pre.notranslate > code.notranslate');
+    handleCodeElements('div.highlight > pre.notranslate');
+
+    let currentFeedback = null;
+    document.querySelectorAll('clipboard-copy').forEach(copyButton => {
+        copyButton.addEventListener('click', () => {
+            const codeContent = copyButton.closest('.snippet-clipboard-content').innerText;
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = codeContent;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextArea);
+
+            const copyIcon = copyButton.querySelector('.octicon-copy');
+            const checkIcon = copyButton.querySelector('.octicon-check');
+            const copyFeedback = copyButton.nextElementSibling;
+
+            if (currentFeedback && currentFeedback !== copyFeedback) {currentFeedback.style.display = 'none';}
+            currentFeedback = copyFeedback;
+
+            copyIcon.classList.add('d-none');
+            checkIcon.classList.remove('d-none');
+            copyFeedback.style.display = 'block';
+            copyButton.style.borderColor = 'var(--color-success-fg)';
+
+            setTimeout(() => {
+                copyIcon.classList.remove('d-none');
+                checkIcon.classList.add('d-none');
+                copyFeedback.style.display = 'none';
+                copyButton.style.borderColor = '';
+            }, 2000);
+        });
+    });
+});
+
+</script>
+
+
+</html>
