@@ -1,0 +1,59 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>动态生成图片</title>
+</head>
+<body>
+<!-- Canvas 用于动态绘制图片 -->
+<canvas id="dynamicCanvas" width="400" height="200"></canvas>
+
+<script>
+    // 1. 解析 URL 中的参数（如 "abc"）
+    const params = new URLSearchParams(window.location.search);
+    const imgParam = params.get('img') || 'default'; // 默认参数
+
+    // 2. 获取 Canvas 上下文
+    const canvas = document.getElementById('dynamicCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // 3. 根据参数动态生成图片（示例：绘制带参数文字的图片）
+    function generateImage(param) {
+        // 清空画布
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 绘制背景
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 绘制参数文字（核心：用参数控制内容）
+        ctx.fillStyle = '#333';
+        ctx.font = '24px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`参数: ${param}`, canvas.width / 2, canvas.height / 2);
+
+        // 额外绘制：根据参数生成简单图形（示例）
+        if (param.includes('circle')) {
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2 + 50, 30, 0, Math.PI * 2);
+            ctx.fillStyle = 'pink';
+            ctx.fill();
+        } else if (param.includes('square')) {
+            ctx.fillStyle = 'lightblue';
+            ctx.fillRect(canvas.width / 2 - 30, canvas.height / 2 + 20, 60, 60);
+        }
+    }
+
+    // 4. 调用生成函数
+    generateImage(imgParam);
+
+    // （可选）如果需要将 Canvas 转为图片元素显示
+    const img = new Image();
+    img.src = canvas.toDataURL('image/png'); // 转为 PNG 图片
+    img.style.maxWidth = '400px';
+    document.body.appendChild(img); // 追加到页面
+</script>
+</body>
+</html>
